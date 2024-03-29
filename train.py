@@ -2,7 +2,8 @@
 
 from utils.accuracy import dice_score, jaccard_score
 from dataset.dataset import CryoEMDataset
-from models.model_5_layers import UNET
+#from models.model_5_layers import UNET
+from models.u2net import U2NET
 import numpy as np
 import config
 import torch
@@ -35,9 +36,9 @@ train_loader = DataLoader(train_ds, shuffle=True, batch_size=config.batch_size, 
 val_loader = DataLoader(val_ds, shuffle=True, batch_size=config.batch_size, pin_memory=config.pin_memory, num_workers=config.num_workers)
 print(f"[INFO] Train Loader Length {len(train_loader)}...")
 
-# initialize our UNet model
-model = UNET().to(config.device)
-
+# initialize our U2-Net model
+# model = UNET().to(config.device)
+model = U2NET().to(config.device)
 
 # initialize loss function and optimizer
 criterion1 = BCEWithLogitsLoss()
