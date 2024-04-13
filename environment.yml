@@ -72,6 +72,7 @@ dependencies:
   - numpy-base=1.24.3=py38h060ed82_1
   - openh264=2.1.1=h4ff587b_0
   - openssl=3.0.10=h7f8727e_2
+  - pandas
   - pillow=9.4.0=py38h6a678d5_0
   - pip=23.2.1=py38h06a4308_0
   - pycparser=2.21=pyhd3eb1b0_0
