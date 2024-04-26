@@ -7,15 +7,15 @@ import torch
 parser = argparse.ArgumentParser(description="CryoSegNet Training")
 
 # Add arguments
-parser.add_argument("--train_dataset_path", type=str, default="train_dataset/*/", help="Path to the training dataset")
-parser.add_argument("--test_dataset_path", type=str, default="test_dataset", help="Path to the test dataset")
+parser.add_argument("--train_dataset_path", type=str, default="train_dataset/", help="Path to the training dataset")
+parser.add_argument("--test_dataset_path", type=str, default="test_dataset/10028", help="Path to the test dataset")
 parser.add_argument("--my_dataset_path", type=str, default="my_dataset", help="Path to your own dataset")
 parser.add_argument("--output_path", type=str, default="output", help="Output directory")
 
 # Device-related arguments
 parser.add_argument("--device", type=str, default="cuda:0" if torch.cuda.is_available() else "cpu", help="Device (cuda:0 or cpu)")
 parser.add_argument("--pin_memory", action="store_true", help="Enable pin_memory for data loading if using CUDA")
-parser.add_argument("--num_workers", type=int, default=8, help="Number of data loading workers")
+parser.add_argument("--num_workers", type=int, default=2, help="Number of data loading workers")
 
 # Model-related arguments
 parser.add_argument("--num_channels", type=int, default=1, help="Number of input channels")
@@ -25,19 +25,19 @@ parser.add_argument("--num_levels", type=int, default=3, help="Number of levels 
 # Training-related arguments
 parser.add_argument("--learning_rate", type=float, default=0.0001, help="Learning rate")
 parser.add_argument("--num_epochs", type=int, default=200, help="Number of training epochs")
-parser.add_argument("--batch_size", type=int, default=6, help="Batch size")
+parser.add_argument("--batch_size", type=int, default=1, help="Batch size")
 
 # Input image size
-parser.add_argument("--input_image_width", type=int, default=1024, help="Input image width")
-parser.add_argument("--input_image_height", type=int, default=1024, help="Input image height")
-parser.add_argument("--input_shape", type=int, default=1024, help="Input image shape")
+parser.add_argument("--input_image_width", type=int, default=512, help="Input image width") # based on paper
+parser.add_argument("--input_image_height", type=int, default=512, help="Input image height")
+parser.add_argument("--input_shape", type=int, default=512, help="Input image shape")
 
 # Logging-related arguments
 parser.add_argument("--logging", action="store_true", help="Enable logging")
 
 # Model related arguments
-parser.add_argument("--cryosegnet_checkpoint", type=str, default="pretrained_models/cryosegnet.pth", help="Path to CryoSegNet checkpoint")
-parser.add_argument("--sam_checkpoint", type=str, default="pretrained_models/sam_vit_h_4b8939.pth", help="Path to SAM checkpoint")
+parser.add_argument("--cryosegnet_checkpoint", type=str, default="weights/CryoSegNet.pth", help="Path to CryoSegNet checkpoint")
+parser.add_argument("--sam_checkpoint", type=str, default="weights/sam_vit_h_4b8939.pth", help="Path to SAM checkpoint")
 parser.add_argument("--model_type", type=str, default="vit_h", help="SAM Model type")
 
 # Additional Arguments for prediction
@@ -45,7 +45,7 @@ parser.add_argument("--empiar_id", type=int, default=10081, help="EMPIAR ID for 
 parser.add_argument("--file_name", type=str, default="10081.star", help="Filename for picked proteins coordinates")
 
 # Additional info in architecture name
-architecture_name = "CryoSegNet Model with Batchsize: {}, InputShape: {}, LR {}".format(
+architecture_name = "CryoSegNetDrop Model with Batchsize: {}, InputShape: {}, LR {}".format(
     parser.parse_args().batch_size,
     parser.parse_args().input_shape,
     parser.parse_args().learning_rate

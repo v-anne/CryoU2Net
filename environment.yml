@@ -2,6 +2,8 @@ name: cryosegnet
 channels:
   - pytorch
   - nvidia
+  - conda-forge
+  - bioconda
   - defaults
 dependencies:
   - _libgcc_mutex=0.1=main
@@ -72,7 +74,6 @@ dependencies:
   - numpy-base=1.24.3=py38h060ed82_1
   - openh264=2.1.1=h4ff587b_0
   - openssl=3.0.10=h7f8727e_2
-  - pandas
   - pillow=9.4.0=py38h6a678d5_0
   - pip=23.2.1=py38h06a4308_0
   - pycparser=2.21=pyhd3eb1b0_0
@@ -109,7 +110,6 @@ dependencies:
       - kiwisolver==1.4.5
       - matplotlib==3.5.2
       - mrcfile==1.4.3
-      - opencv-python==4.7.0.72
       - packaging==23.1
       - pathtools==0.1.2
       - protobuf==4.24.3
@@ -125,3 +125,4 @@ dependencies:
       - smmap==5.0.0
       - tqdm==4.64.1
       - wandb==0.13.10
+      - opencv-python==4.7.0.72

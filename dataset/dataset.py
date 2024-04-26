@@ -24,6 +24,55 @@ def transform(image):
     return image.astype('uint8')
 
 
+# class CryoEMDataset(Dataset):
+#     def __init__(self, img_dir, mask_dir, transform=None, patch_size=1024):
+#         super().__init__()
+#         self.img_dir = img_dir
+#         self.mask_dir = mask_dir
+#         self.transform = transform
+#         self.patch_size = patch_size
+
+#     def __len__(self):
+#         total_patches = 0
+#         for img_path in self.img_dir:
+#             img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+#             h, w = img.shape
+#             total_patches += (h // self.patch_size) * (w // self.patch_size)
+#         return total_patches
+
+#     def __getitem__(self, idx):
+#         global_patch_index = 0
+#         total_images = len(self.img_dir)
+#         for image_index, (img_path, mask_path) in enumerate(zip(self.img_dir, self.mask_dir)):
+#             image = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+#             mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
+#             num_patches_per_row = image.shape[1] // self.patch_size
+#             num_patches_per_image = (image.shape[0] // self.patch_size) * num_patches_per_row
+
+#             if idx < global_patch_index + num_patches_per_image:
+#                 local_patch_index = idx - global_patch_index
+#                 row_index = local_patch_index // num_patches_per_row
+#                 col_index = local_patch_index % num_patches_per_row
+#                 top = row_index * self.patch_size
+#                 left = col_index * self.patch_size
+#                 image_patch = image[top:top + self.patch_size, left:left + self.patch_size]
+#                 mask_patch = mask[top:top + self.patch_size, left:left + self.patch_size]
+                
+#                 if self.transform:
+#                     image_patch = self.transform(image_patch)
+#                     mask_patch = self.transform(mask_patch)
+
+#                 image_patch = torch.from_numpy(image_patch).unsqueeze(0).float() / 255.0
+#                 mask_patch = torch.from_numpy(mask_patch).unsqueeze(0).float() / 255.0
+                
+#                 # Progress print statement
+#                 print(f"Processing image {image_index+1}/{total_images}, patch {local_patch_index+1}/{num_patches_per_image}")
+                
+#                 return (image_patch, mask_patch)
+
+#             global_patch_index += num_patches_per_image
+
+#         raise IndexError("Index out of range in dataset")
 
 class CryoEMDataset(Dataset):
     def __init__(self, img_dir, transform):
@@ -40,7 +89,7 @@ class CryoEMDataset(Dataset):
         # image = np.rot90(image)
         
         image_path = self.img_dir[idx]
-        mask_path = image_path[:-4] + '_mask.jpg'
+        mask_path = image_path[:-4] + '_mask.jpg' # png or jpg?
         mask_path = mask_path.replace('images', 'masks')
         
         image = cv2.imread(image_path, 0)
