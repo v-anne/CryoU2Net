@@ -3,13 +3,12 @@
 from utils.accuracy import dice_score, jaccard_score
 from dataset.dataset import CryoEMDataset
 from models.model_5_layers import UNET
-from models.u2net import U2NETP as U2NET
+# from models.u2net import U2NET
 import numpy as np
 import config
 import torch
 import torch.nn as nn
 from torch.nn import BCEWithLogitsLoss
-from torch.nn import BCELoss
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 import torch.nn.functional as F
@@ -19,35 +18,13 @@ from tqdm import tqdm
 import time
 from datetime import datetime, date
 import os
-
-
-# # ------- 1. define loss function --------
-
-# bce_loss = nn.BCELoss(size_average=True)
-
-# def muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, labels_v):
-
-#     loss0 = bce_loss(d0,labels_v)
-#     loss1 = bce_loss(d1,labels_v)
-#     loss2 = bce_loss(d2,labels_v)
-#     loss3 = bce_loss(d3,labels_v)
-#     loss4 = bce_loss(d4,labels_v)
-#     loss5 = bce_loss(d5,labels_v)
-#     loss6 = bce_loss(d6,labels_v)
-
-#     loss = loss0 + loss1 + loss2 + loss3 + loss4 + loss5 + loss6
-#     print("l0: %3f, l1: %3f, l2: %3f, l3: %3f, l4: %3f, l5: %3f, l6: %3f\n"%(loss0.data.item(),loss1.data.item(),loss2.data.item(),loss3.data.item(),loss4.data.item(),loss5.data.item(),loss6.data.item()))
-
-#     return loss0, loss
-
-
 # load the image
+
 
 train_image_path = list(glob.glob(config.train_dataset_path + 'images/*.png'))
 
 val_image_path = list(glob.glob(config.train_dataset_path + 'val/images/*.png'))
 
-print(len(train_image_path))
 
 train_ds = CryoEMDataset(img_dir=train_image_path, transform=None)
 val_ds = CryoEMDataset(img_dir=val_image_path, transform=None)
@@ -60,8 +37,8 @@ val_loader = DataLoader(val_ds, shuffle=True, batch_size=config.batch_size, pin_
 print(f"[INFO] Train Loader Length {len(train_loader)}...")
 
 # initialize our U2-Net model
-# model = UNET().to(config.device)
-model = U2NET().to(config.device)
+model = UNET().to(config.device)
+# model = U2NET().to(config.device)
 
 # initialize loss function and optimizer
 criterion1 = BCEWithLogitsLoss()
@@ -94,18 +71,11 @@ for e in tqdm(range(config.num_epochs)):
 
     for i, data in enumerate(train_loader):
         x, y = data
-        # print(x)
-        # print(y)
         x, y = x.to(config.device), y.to(config.device)
 
         optimizer.zero_grad()
         
-        d0, d1, d2, d3, d4 = model(x)
-        # loss1, loss2 = muti_bce_loss_fusion(d0, d1, d2, d3, d4, d5, d6, y)
-        pred = d0
-        # print(pred)
-        # print(f"{len(x), len(pred)}")
-        # print(f"{len(y)}")
+        pred = model(x)
         loss1 = criterion1(pred, y) 
         loss2 = criterion2(nn.Sigmoid()(pred), y)
         loss = (loss1 + loss2)/2
@@ -135,8 +105,7 @@ for e in tqdm(range(config.num_epochs)):
             x, y = x.to(config.device), y.to(config.device)
             
             
-            d0, d1, d2, d3, d4 = model(x)
-            pred = d0
+            pred = model(x)
             loss = criterion2(nn.Sigmoid()(pred), y)
             
             # Accumulate the validation loss
@@ -168,9 +137,8 @@ for e in tqdm(range(config.num_epochs)):
     train_loss, val_loss, train_dice_score, val_dice_score))
     
     # serialize the model to disk
-    if e % 10 == 0:
-        current_datetime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-        MODEL_PATH = config.architecture_name + " Epochs: {}, Date: {}.pth".format(e, current_datetime)
+    if e % 5 == 0:
+        MODEL_PATH = config.architecture_name + " Epochs: {}, Date: {}.pth".format(e, date.today())
         torch.save(model.state_dict(), os.path.join(f"{config.output_path}/models/", MODEL_PATH))
         
     if val_loss < best_val_loss:
