@@ -47,13 +47,15 @@ def evaluation(gt_path, model):
     
     for i in range(0, len(gt_path), 1):
         g_path = gt_path[i]
-        c_path = g_path.replace("Groundtruth", f"General/{model}")
+        # c_path = g_path.replace("Groundtruth", f"General/{model}")
+        file_identifier = os.path.basename(g_path).replace('_mask.jpg', '')
+        c_path = f"output/results/{file_identifier}_sam_mask.jpg"
         
         try:
             precision, recall, dice_score = evaluation_metrics(g_path, c_path)
         except:
             pass
-        
+
         total_precisions.append(precision)
         total_recalls.append(recall)
         total_dice_scores.append(dice_score)
@@ -71,13 +73,15 @@ def evaluation(gt_path, model):
     print("\tDice Score", dice_score)
     
 
-empiar_ids = [10028, 10081, 10345, 11056, 10532, 10093, 10017]
+
+#empiar_ids = [10028, 10081, 10345, 11056, 10532, 10093, 10017]
 print("[INFO] Loading up test images path ...")
-for empiar_id in empiar_ids:
+for empiar_id in [10028]:
     gt_path = list(glob.glob(f"{config.test_dataset_path}/{empiar_id}/masks/*.jpg"))[20:]
+    print(gt_path)
     print("\n")
     print(f"Evaluation Results for EMPIAR ID {empiar_id}")
-    evaluation(gt_path, model = "CrYOLO")
-    evaluation(gt_path, model = "Topaz")
-    evaluation(gt_path, model = "CryoSegNet")
+    evaluation(gt_path, model = "CryoU2Net - SAM Mask")
+    # evaluation(gt_path, model = "Topaz")
+    # evaluation(gt_path, model = "CryoSegNet")
     print(f"--------------------------------------")
