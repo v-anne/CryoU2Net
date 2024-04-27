@@ -11,15 +11,19 @@ import glob
 import os
 from dataset.dataset import transform
 from models.model_5_layers import UNET
+from models.u2net import U2NETP as U2NET
 import config
 import mrcfile
 from segment_anything import SamAutomaticMaskGenerator, sam_model_registry
 import statistics as st
 
 print("[INFO] Loading up model...")
-model = UNET().to(device=config.device)
-state_dict = torch.load(config.cryosegnet_checkpoint)
+model = U2NET().to(device=config.device)
+# model2 = UNET().to(device=config.device)
+state_dict = torch.load("weights/CryoSegNet.pth") #???
+# state_dict2 = torch.load("weights/cryosegnet.pth")
 model.load_state_dict(state_dict)
+# model2.load_state_dict(state_dict2)
 
 sam_model = sam_model_registry[config.model_type](checkpoint=config.sam_checkpoint)
 sam_model.to(device=config.device)
@@ -45,10 +49,10 @@ def get_annotations(anns):
 def prepare_plot(image, predicted_mask, sam_mask, coords, image_path):
     plt.figure(figsize=(40, 30))
     plt.subplot(221)
-    plt.title('Testing Image', fontsize=14)
+    plt.title('Image', fontsize=14)
     plt.imshow(image, cmap='gray')
     plt.subplot(222)
-    plt.title('Attention-UNET Mask', fontsize=14)
+    plt.title('U-NET Mask', fontsize=14)
     plt.imshow(predicted_mask, cmap='gray')
     plt.subplot(223)
     plt.title('SAM Mask', fontsize=14)
@@ -61,7 +65,16 @@ def prepare_plot(image, predicted_mask, sam_mask, coords, image_path):
     path = path.replace(".jpg", "_result.jpg")
     final_path = os.path.join(f"{config.output_path}/results/", f'{path}')
     cv2.imwrite(final_path, coords)
-
+    final_path = final_path.replace("result.png", "composite.png")
+    final_path = final_path.replace("result.jpg", "composite.jpg")
+    plt.savefig(f"{final_path}")
+    final_path = final_path.replace("composite.png", "predicted_mask.png")
+    final_path = final_path.replace("composite.jpg", "predicted_mask.jpg")
+    plt.imsave(final_path, predicted_mask, cmap='gray')
+    final_path = final_path.replace("predicted_mask.png", "sam_mask.png")
+    final_path = final_path.replace("predicted_mask.jpg", "sam_mask.jpg")
+    plt.imsave(final_path, sam_mask, cmap='gray')
+    plt.close()
 
 
 
@@ -72,7 +85,8 @@ def make_predictions(model, image_path):
         image = cv2.imread(image_path, 0)
         
         #Check if denoising makes difference or not! If the images are already denoised don't denoise them else denoise them!
-        image = denoise_jpg_image(image)
+        # image = denoise_jpg_image(image)
+        print(image)
         height, width = image.shape
         orig_image = copy.deepcopy(image)
         image = cv2.resize(image, (config.input_image_width, config.input_image_height))    
@@ -83,10 +97,15 @@ def make_predictions(model, image_path):
         image = image.to(config.device).unsqueeze(0)
         
         
-        predicted_mask = model(image)    
+        predicted_mask = model(image)[0]  
+        # print(predicted_mask)
      
         predicted_mask = torch.sigmoid(predicted_mask)
         predicted_mask = predicted_mask.cpu().numpy().reshape(config.input_image_width, config.input_image_height)
+        
+        # Lower the threshold for detection
+        threshold = 0.3  # Adjust this value based on your needs
+        predicted_mask = (predicted_mask > threshold).astype(np.float32)
 
         sam_output = np.repeat(transform(predicted_mask)[:,:,None], 3, axis=-1)
         predicted_mask = cv2.resize(predicted_mask, (width, height))
@@ -99,7 +118,7 @@ def make_predictions(model, image_path):
         
         bboxes = []
         for i in range(0, len(masks)):
-            if masks[i]["predicted_iou"] > 0.94:
+            if masks[i]["predicted_iou"] > 0.40:
                 box = masks[i]["bbox"]
                 bboxes.append(box)
         
@@ -108,8 +127,9 @@ def make_predictions(model, image_path):
             x_ = st.mode([box[2] for box in bboxes])
             y_ = st.mode([box[3] for box in bboxes])
             d_ = np.sqrt((x_ * width / config.input_image_width)**2 + (y_ * height / config.input_image_height)**2)
-            r_ = int(d_//2)
-            th = r_ * 0.20
+            scale_factor = 0.75
+            r_ = int((d_ // 2) * scale_factor)
+            th = r_ * 0.25
             segment_mask = cv2.cvtColor(segment_mask, cv2.COLOR_GRAY2BGR)
             for b in bboxes:
                 if b[2] < x_ + th and b[2] > x_ - th/3 and b[3] < y_ + th and b[3] > y_ - th/3: 
@@ -123,7 +143,9 @@ def make_predictions(model, image_path):
             pass
         
 print("[INFO] Loading up test images path ...")
-images_path = list(glob.glob(f"{config.my_dataset_path}/*.*p*g"))
+images_path = list(glob.glob(f"output/patches/*.*p*g"))
+print(f"{len(images_path)} images.")
 
 for i in range(0, len(images_path), 1):
-	make_predictions(model, images_path[i])
+    make_predictions(model, images_path[i])
+    print(i)
